@@ -47,6 +47,7 @@ def html(body):
         <meta charset="UTF-8">
         <title>Share a secret</title>
         <link rel="stylesheet" href="{ url_for('static', filename='style.css') }" type="text/css">
+        <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
     <body>
         {body}
