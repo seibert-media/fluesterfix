@@ -55,19 +55,6 @@ def html(body):
 
 
 def retrieve(sid, password=None):
-    # Check the password before trying to read and burn the secret.
-    # This will result in a HTTP 500 if the password is wrong.
-    # If a password is provided, but not needed (or vice-versa), this
-    # will simply return None, thus acting as if the secret has already
-    # been revealed.
-    passwordfile = join(DATA, sid, 'password')
-    if password and isfile(passwordfile):
-        with open(passwordfile, 'rb') as fp:
-            password_bytes = fp.read()
-        assert password == decrypt(password_bytes)
-    elif password or isfile(passwordfile):
-        return None
-
     # Try to rename this sid's directory. This is an atomic operation on
     # POSIX file systems, meaning two concurrent requests cannot rename
     # the same directory -- for one of them, it will look like the
@@ -78,6 +65,20 @@ def retrieve(sid, password=None):
         rename(join(DATA, sid), join(DATA, locked_sid))
     except OSError:
         return None
+
+    # If the secret requires a password, check it now. This is done
+    # after the secret has been locked. This will remove the secret if
+    # a wrong password is supplied, thus removing any ability to try
+    # brute-forcing a password, because the allowed number of attempts
+    # is limited to 1 (one).
+    passwordfile = join(DATA, locked_sid, 'password')
+    if password and isfile(passwordfile):
+        with open(passwordfile, 'rb') as fp:
+            password_bytes = fp.read()
+
+        if password != decrypt(password_bytes):
+            rmtree(join(DATA, locked_sid))
+            return None
 
     # Now that we have "locked" this sid, we can safely read it and then
     # destroy it.
