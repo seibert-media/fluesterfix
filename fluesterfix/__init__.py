@@ -4,7 +4,7 @@
 from base64 import b64decode, b64encode
 from random import choice
 from os import environ, mkdir, rename
-from os.path import join
+from os.path import isfile, join
 from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
@@ -54,7 +54,20 @@ def html(body):
 </html>'''
 
 
-def retrieve(sid):
+def retrieve(sid, password=None):
+    # Check the password before trying to read and burn the secret.
+    # This will result in a HTTP 500 if the password is wrong.
+    # If a password is provided, but not needed (or vice-versa), this
+    # will simply return None, thus acting as if the secret has already
+    # been revealed.
+    passwordfile = join(DATA, sid, 'password')
+    if password and isfile(passwordfile):
+        with open(passwordfile, 'rb') as fp:
+            password_bytes = fp.read()
+        assert password == decrypt(password_bytes)
+    elif password or isfile(passwordfile):
+        return None
+
     # Try to rename this sid's directory. This is an atomic operation on
     # POSIX file systems, meaning two concurrent requests cannot rename
     # the same directory -- for one of them, it will look like the
@@ -75,7 +88,7 @@ def retrieve(sid):
     return decrypt(secret_bytes)
 
 
-def store(secret):
+def store(secret, password=None):
     while True:
         try:
             # Again, mkdir is an atomic operation on POSIX file systems.
@@ -86,6 +99,10 @@ def store(secret):
             break
         except FileExistsError:
             continue
+
+    if password:
+        with open(join(DATA, sid, 'password'), 'wb') as fp:
+            fp.write(encrypt(password))
 
     with open(join(DATA, sid, 'secret'), 'wb') as fp:
         fp.write(encrypt(secret))
@@ -105,6 +122,8 @@ def index():
            you will get a link that you can send to someone else. That
            link can only be used once.</p>
         <form action="/new" method="post">
+            <input type="password" name="password"
+             placeholder="If you want to secure the secret using an additional password, enter it here.">
             <textarea name="data"></textarea>
             <input type="submit" value="&#x1f517; Create link">
         </form>
@@ -114,14 +133,16 @@ def index():
 @app.route('/new', methods=['POST'])
 def new():
     try:
-        secret = request.form.to_dict()['data']
+        form = request.form.to_dict()
+        secret = form['data']
+        password = form['password']
     except:
         return 'Garbage'
 
     if len(secret.strip()) <= 0:
         return redirect(url_for('index'))
 
-    sid = store(secret)
+    sid = store(secret, password)
     scheme = request.headers.get('x-forwarded-proto', 'http')
     host = request.headers.get('x-forwarded-host', request.headers['host'])
     sid_url = f'{scheme}://{host}/get/{sid}'
@@ -138,11 +159,18 @@ def get(sid):
     validate_sid(sid)
     # FIXME Without that hidden field, lynx insists on doing GET. Is
     # that a bug in lynx or is it invalid to POST empty forms?
+    form_field = '<input name="compat" type="hidden" value="lynx needs this">'
+    if isfile(join(DATA, sid, 'password')):
+        form_field = (
+            '<p><label for="password">This secret is protected by a password. '
+            'Please enter it here:</label></p>'
+            '<input type="password" name="password" id="password">'
+        )
     return html(f'''
         <h1>Reveal this secret?</h1>
         <p>You can only do this once.</p>
         <form action="/reveal/{sid}" method="post">
-            <input name="compat" type="hidden" value="lynx needs this">
+            {form_field}
             <input type="submit" value="&#x1f50d; Reveal the secret">
         </form>
     ''')
@@ -151,7 +179,11 @@ def get(sid):
 @app.route('/reveal/<sid>', methods=['POST'])
 def reveal(sid):
     validate_sid(sid)
-    secret = retrieve(sid)
+    try:
+        password = request.form.to_dict()['password']
+    except:
+        password = None
+    secret = retrieve(sid, password)
     if secret is None:
         return html(f'''
             <h1>Error</h1>
