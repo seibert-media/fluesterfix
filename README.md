@@ -30,12 +30,12 @@ installed using `pip install -e .`.
 
 Use the following environment variables:
 
-    - `$FLUESTERFIX_KEY`: 32 bytes that will be used to encrypt secrets as
-      long as they’re stored on disk. Base64 encoded to allow you to
-      pass truly random values. **Required.**
-    - `$FLUESTERFIX_DATA`: The directory where data will be stored. Must
-      exist prior to running the program. Should be created by sysadmin
-      with correct permissions. Defaults to `/tmp` for quick tests.
+-   `$FLUESTERFIX_KEY`: 32 bytes that will be used to encrypt secrets as
+    long as they’re stored on disk. Base64 encoded to allow you to
+    pass truly random values. **Required.**
+-   `$FLUESTERFIX_DATA`: The directory where data will be stored. Must
+    exist prior to running the program. Should be created by sysadmin
+    with correct permissions. Defaults to `/tmp` for quick tests.
 
 The program does not automatically remove secrets which have never been
 retrieved. You might want to install a cron job on your system to remove
