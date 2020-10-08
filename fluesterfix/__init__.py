@@ -8,7 +8,7 @@ from os.path import join
 from shutil import rmtree
 from string import ascii_letters, digits
 
-from flask import Flask, escape, request
+from flask import Flask, escape, request, url_for
 from nacl.secret import SecretBox
 
 
@@ -46,33 +46,7 @@ def html(body):
     <head>
         <meta charset="UTF-8">
         <title>Share a secret</title>
-        <style>
-        *
-        {{
-            font-family: sans-serif;
-        }}
-        body
-        {{
-            margin: 1em auto;
-            padding: 0px 5em;
-        }}
-        input[type=text]
-        {{
-            width: 100%;
-        }}
-        textarea
-        {{
-            width: 100%;
-            height: 10em;
-        }}
-        </style>
-        <script>
-            function copy() {{
-                var copyText = document.querySelector("#copytarget");
-                copyText.select();
-                document.execCommand("copy");
-            }}
-        </script>
+        <link rel="stylesheet" href="{ url_for('static', filename='style.css') }" type="text/css">
     </head>
     <body>
         {body}
@@ -150,7 +124,7 @@ def new():
         <h1>Share this link</h1>
         <p>Send <a href="{sid_url}">this link</a> to someone else:</p>
         <p><input id="copytarget" type="text" value="{sid_url}"></p>
-        <button onclick="copy()">&#x1f4cb; Copy to clipboard</button>
+        <p><span class="button" onclick="copy()">&#x1f4cb; Copy to clipboard</span></p>
     '''), 201
 
 
@@ -177,12 +151,15 @@ def reveal(sid):
             <p>This secret has already been revealed.</p>
         '''), 404
     else:
+        # Show all lines, if possible. Never show more than 100, though.
+        # CSS also sets a min-height for this.
+        lines = min(len(secret.split('\n')), 100)
         return html(f'''
             <h1>Secret</h1>
             <p>Here’s your secret. It is no longer accessible through
                the link, so copy it <em>now</em>.</p>
-            <textarea id="copytarget">{escape(secret)}</textarea>
-            <button onclick="copy()">&#x1f4cb; Copy to clipboard</button>
+            <textarea rows="{lines}" id="copytarget">{escape(secret)}</textarea>
+            <p><span class="button" onclick="copy()">&#x1f4cb; Copy to clipboard</span></p>
         '''), 410
 
 

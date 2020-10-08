@@ -1,0 +1,72 @@
+:root {
+    --text-color: #000000;
+    --bg-color1: #FFFFFF;
+    --bg-color2: #EEEEEE;
+    --line-color: #CCCCCC;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: #FFFFFF;
+        --bg-color1: #000000;
+        --bg-color2: #111111;
+        --line-color: #333333;
+    }
+}
+
+* {
+    font-family: "Roboto","Helvetica Neue",sans-serif;
+    font-size: 1em;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+    background-color: var(--bg-color1);
+}
+
+a:link, a:visited {
+    color: var(--text-color);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--text-color);
+}
+
+a:hover, a:active, a:focus {
+    border-bottom: 1px solid var(--text-color);
+}
+
+body {
+    margin: 1em 0;
+    padding: 0 5em;
+}
+
+h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin: 0 0 0.5em 0;
+}
+
+input, textarea, .button {
+    border: 1px solid var(--line-color);
+    padding: 5px;
+    display: block;
+    border-radius: 2px;
+}
+
+input[type=submit], .button {
+    width: 25em;
+    background-color: var(--bg-color2);
+    cursor: pointer;
+}
+
+input[type=text] {
+    width: 100%;
+}
+
+p {
+    margin: 0 0 0.5em 0;
+}
+
+textarea {
+    width: 100%;
+    min-height: 10em;
+    line-height: 1.2em;
+}
