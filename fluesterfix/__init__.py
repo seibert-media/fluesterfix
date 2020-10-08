@@ -166,6 +166,8 @@ def get(sid):
             '<p><label for="password">This secret is protected by a password. '
             'Please enter it here:</label></p>'
             '<input type="password" name="password" id="password">'
+            '<p>Be careful! If you enter a wrong password, the secret '
+            'will be gone forever.</p>'
         )
     return html(f'''
         <h1>Reveal this secret?</h1>
