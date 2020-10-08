@@ -3,7 +3,7 @@
 
 from base64 import b64decode, b64encode
 from random import choice
-from os import getenv, mkdir, rename
+from os import environ, mkdir, rename
 from os.path import join
 from shutil import rmtree
 from string import ascii_letters, digits
@@ -14,11 +14,8 @@ from nacl.secret import SecretBox
 
 app = Flask(__name__)
 
-DATA = getenv('FLUESTERFIX_DATA', '/tmp')
-SECRET_KEY = getenv(
-    'FLUESTERFIX_KEY',
-    b64encode('developersdevelopersdevelopers!!'.encode('UTF-8')),
-)
+DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
+SECRET_KEY = environ['FLUESTERFIX_KEY']
 SID_LEN = 64
 
 
