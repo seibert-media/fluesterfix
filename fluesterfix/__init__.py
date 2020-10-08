@@ -5,6 +5,7 @@ from base64 import b64decode, b64encode
 from random import choice
 from os import environ, mkdir, rename
 from os.path import join
+from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
 
@@ -17,6 +18,7 @@ app = Flask(__name__)
 DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
 SECRET_KEY = environ['FLUESTERFIX_KEY']
 SID_LEN = 32
+SID_VALIDATOR = re_compile(f'^[A-Za-z0-9]{{{SID_LEN}}}$')
 
 
 def decrypt(msg):
@@ -53,9 +55,6 @@ def html(body):
 
 
 def retrieve(sid):
-    if '.' in sid or '/' in sid or len(sid) != SID_LEN:
-        return None
-
     # Try to rename this sid's directory. This is an atomic operation on
     # POSIX file systems, meaning two concurrent requests cannot rename
     # the same directory -- for one of them, it will look like the
@@ -94,6 +93,10 @@ def store(secret):
     return sid
 
 
+def validate_sid(sid):
+    assert SID_VALIDATOR.search(sid) is not None
+
+
 @app.route('/')
 def index():
     return html('''
@@ -128,6 +131,7 @@ def new():
 
 @app.route('/get/<sid>')
 def get(sid):
+    validate_sid(sid)
     # FIXME Without that hidden field, lynx insists on doing GET. Is
     # that a bug in lynx or is it invalid to POST empty forms?
     return html(f'''
@@ -142,6 +146,7 @@ def get(sid):
 
 @app.route('/reveal/<sid>', methods=['POST'])
 def reveal(sid):
+    validate_sid(sid)
     secret = retrieve(sid)
     if secret is None:
         return html(f'''
