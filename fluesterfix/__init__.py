@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
 SECRET_KEY = environ['FLUESTERFIX_KEY']
-SID_LEN = 64
+SID_LEN = 32
 
 
 def decrypt(msg):
