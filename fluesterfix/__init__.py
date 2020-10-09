@@ -190,7 +190,7 @@ def reveal(sid):
     if secret is None:
         return html(f'''
             <h1>Error</h1>
-            <p>This secret has already been revealed.</p>
+            <p>This secret could not be retrieved.</p>
         '''), 404
     else:
         # Show all lines, if possible. Never show more than 100, though.
