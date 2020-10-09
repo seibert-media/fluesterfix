@@ -9,7 +9,7 @@ from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
 
-from flask import Flask, escape, request, url_for
+from flask import Flask, escape, redirect, request, url_for
 from nacl.secret import SecretBox
 
 
@@ -117,6 +117,10 @@ def new():
         secret = request.form.to_dict()['data']
     except:
         return 'Garbage'
+
+    if len(secret.strip()) <= 0:
+        return redirect(url_for('index'))
+
     sid = store(secret)
     scheme = request.headers.get('x-forwarded-proto', 'http')
     host = request.headers.get('x-forwarded-host', request.headers['host'])
