@@ -17,8 +17,6 @@
 * {
     font-family: "Roboto","Helvetica Neue",sans-serif;
     font-size: 1em;
-    margin: 0;
-    padding: 0;
     color: var(--text-color);
     background-color: var(--bg-color1);
 }
@@ -41,7 +39,6 @@ body {
 h1 {
     font-size: 2em;
     font-weight: bold;
-    margin: 0 0 0.5em 0;
 }
 
 input, textarea, .button {
