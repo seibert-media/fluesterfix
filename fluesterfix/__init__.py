@@ -127,7 +127,7 @@ def new():
     sid_url = f'{scheme}://{host}/get/{sid}'
     return html(f'''
         <h1>Share this link</h1>
-        <p>Send <a href="{sid_url}">this link</a> to someone else:</p>
+        <p>Send this link to someone else:</p>
         <p><input id="copytarget" type="text" value="{sid_url}"></p>
         <p><span class="button" onclick="copy()">&#x1f4cb; Copy to clipboard</span></p>
     '''), 201
