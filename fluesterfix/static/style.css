@@ -54,7 +54,7 @@ input[type=submit], .button {
     cursor: pointer;
 }
 
-input[type=text], input[type=password] {
+input[type=text] {
     width: 100%;
 }
 
