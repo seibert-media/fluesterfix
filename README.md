@@ -12,6 +12,7 @@ You need:
 -   Python 3
 -   Flask
 -   PyNaCl
+-   shred, usually from GNU coreutils
 
 You don’t need a database. However, this program expects to operate on a
 file system that guarantees POSIX semantics.
