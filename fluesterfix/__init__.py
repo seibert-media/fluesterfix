@@ -8,6 +8,7 @@ from os.path import join
 from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
+from subprocess import run
 
 from flask import Flask, escape, redirect, request, url_for
 from nacl.secret import SecretBox
@@ -70,6 +71,7 @@ def retrieve(sid):
     # destroy it.
     with open(join(DATA, locked_sid, 'secret'), 'rb') as fp:
         secret_bytes = fp.read()
+    run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
     rmtree(join(DATA, locked_sid))
 
     return decrypt(secret_bytes)
