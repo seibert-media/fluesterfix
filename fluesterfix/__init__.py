@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from base64 import b64decode, b64encode
+from base64 import b32decode, b32encode
 from random import choice
 from os import environ, mkdir, rename
 from os.path import join
@@ -12,24 +12,19 @@ from subprocess import run
 
 from flask import Flask, escape, redirect, request, url_for
 from nacl.secret import SecretBox
+from nacl.utils import random
 
 
 app = Flask(__name__)
 
 DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
-SECRET_KEY = environ['FLUESTERFIX_KEY']
-SID_LEN = 32
+SID_LEN = 4
 SID_VALIDATOR = re_compile(f'^[A-Za-z0-9]{{{SID_LEN}}}$')
 
-
-def decrypt(msg):
-    box = SecretBox(b64decode(SECRET_KEY))
-    return box.decrypt(msg).decode('UTF-8')
-
-
-def encrypt(msg):
-    box = SecretBox(b64decode(SECRET_KEY))
-    return box.encrypt(msg.encode('UTF-8'))
+# I wish there were enums in Python.
+ALREADY_REVEALED = 0
+WRONG_KEY = 1
+OK = 2
 
 
 def generate_sid():
@@ -55,7 +50,7 @@ def html(body):
 </html>'''
 
 
-def retrieve(sid):
+def retrieve(sid, key):
     # Try to rename this sid's directory. This is an atomic operation on
     # POSIX file systems, meaning two concurrent requests cannot rename
     # the same directory -- for one of them, it will look like the
@@ -65,7 +60,7 @@ def retrieve(sid):
     try:
         rename(join(DATA, sid), join(DATA, locked_sid))
     except OSError:
-        return None
+        return None, ALREADY_REVEALED
 
     # Now that we have "locked" this sid, we can safely read it and then
     # destroy it.
@@ -74,7 +69,13 @@ def retrieve(sid):
     run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
     rmtree(join(DATA, locked_sid))
 
-    return decrypt(secret_bytes)
+    key_bytes = b32decode(key.encode('ASCII'))
+    try:
+        box = SecretBox(key_bytes)
+        decrypted_bytes = box.decrypt(secret_bytes)
+    except:
+        return None, WRONG_KEY
+    return decrypted_bytes.decode('UTF-8'), OK
 
 
 def store(secret):
@@ -89,10 +90,19 @@ def store(secret):
         except FileExistsError:
             continue
 
-    with open(join(DATA, sid, 'secret'), 'wb') as fp:
-        fp.write(encrypt(secret))
+    key = random(SecretBox.KEY_SIZE)
+    box = SecretBox(key)
 
-    return sid
+    with open(join(DATA, sid, 'secret'), 'wb') as fp:
+        fp.write(box.encrypt(secret.encode('UTF-8')))
+
+    return sid, str(b32encode(key), 'ASCII')
+
+
+def validate_key(key):
+    # It's random bytes, there's not a lot to validate, except for the
+    # length (32 bytes encoded using base32).
+    assert len(key) == 56
 
 
 def validate_sid(sid):
@@ -123,10 +133,10 @@ def new():
     if len(secret.strip()) <= 0:
         return redirect(url_for('index'))
 
-    sid = store(secret)
+    sid, key = store(secret)
     scheme = request.headers.get('x-forwarded-proto', 'http')
     host = request.headers.get('x-forwarded-host', request.headers['host'])
-    sid_url = f'{scheme}://{host}/get/{sid}'
+    sid_url = f'{scheme}://{host}/get/{sid}/{key}'
     return html(f'''
         <h1>Share this link</h1>
         <p>Send this link to someone else. <em>It will be valid for 7 days.</em></p>
@@ -135,29 +145,42 @@ def new():
     '''), 201
 
 
-@app.route('/get/<sid>')
-def get(sid):
+@app.route('/get/<sid>/<key>')
+def get(sid, key):
+    validate_key(key)
     validate_sid(sid)
     # FIXME Without that hidden field, lynx insists on doing GET. Is
     # that a bug in lynx or is it invalid to POST empty forms?
     return html(f'''
         <h1>Reveal this secret?</h1>
         <p>You can only do this once.</p>
-        <form action="/reveal/{sid}" method="post">
+        <form action="/reveal/{sid}/{key}" method="post">
             <input name="compat" type="hidden" value="lynx needs this">
             <input type="submit" value="&#x1f50d; Reveal the secret">
         </form>
     ''')
 
 
-@app.route('/reveal/<sid>', methods=['POST'])
-def reveal(sid):
+@app.route('/reveal/<sid>/<key>', methods=['POST'])
+def reveal(sid, key):
+    validate_key(key)
     validate_sid(sid)
-    secret = retrieve(sid)
-    if secret is None:
+    secret, status = retrieve(sid, key)
+    if status == ALREADY_REVEALED:
         return html(f'''
             <h1>Error</h1>
             <p>This secret has already been revealed.</p>
+        '''), 404
+    elif status == WRONG_KEY:
+        # Provide a dedicated error message if a wrong key was used.
+        # This tries to avoid confusion of users: They will now know
+        # that they made a mistake while copying the URL (or a
+        # consultant can tell them that). Since the secret has been
+        # destroyed, there is no risk of being brute forced. (If the
+        # secret lived on, an attacker might try again and again.)
+        return html(f'''
+            <h1>Error</h1>
+            <p>Wrong key. Secret has been destroyed.</p>
         '''), 404
     else:
         # Show all lines, if possible. Never show more than 100, though.
