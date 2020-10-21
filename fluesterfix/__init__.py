@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from base64 import b32decode, b32encode
+from base64 import b64decode, b64encode
 from random import choice
 from os import environ, mkdir, rename
 from os.path import join
@@ -69,7 +69,7 @@ def retrieve(sid, key):
     run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
     rmtree(join(DATA, locked_sid))
 
-    key_bytes = b32decode(key.encode('ASCII'))
+    key_bytes = b64decode(key.replace('_', '/').encode('ASCII'))
     try:
         box = SecretBox(key_bytes)
         decrypted_bytes = box.decrypt(secret_bytes)
@@ -96,13 +96,13 @@ def store(secret):
     with open(join(DATA, sid, 'secret'), 'wb') as fp:
         fp.write(box.encrypt(secret.encode('UTF-8')))
 
-    return sid, str(b32encode(key), 'ASCII')
+    return sid, str(b64encode(key), 'ASCII').replace('/', '_')
 
 
 def validate_key(key):
     # It's random bytes, there's not a lot to validate, except for the
-    # length (32 bytes encoded using base32).
-    assert len(key) == 56
+    # length (32 bytes encoded using base64).
+    assert len(key) == 44
 
 
 def validate_sid(sid):
