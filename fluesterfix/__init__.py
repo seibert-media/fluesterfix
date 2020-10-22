@@ -69,7 +69,11 @@ def retrieve(sid, key):
     run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
     rmtree(join(DATA, locked_sid))
 
-    key_bytes = b64decode(key.replace('_', '/').encode('ASCII'))
+    # Restore padding. (No point in using something like a while loop
+    # here, we checked for an explicit length earlier.)
+    key += '='
+    key = key.replace('_', '/')
+    key_bytes = b64decode(key.encode('ASCII'))
     try:
         box = SecretBox(key_bytes)
         decrypted_bytes = box.decrypt(secret_bytes)
@@ -90,19 +94,25 @@ def store(secret):
         except FileExistsError:
             continue
 
-    key = random(SecretBox.KEY_SIZE)
-    box = SecretBox(key)
+    key_bytes = random(SecretBox.KEY_SIZE)
+    box = SecretBox(key_bytes)
 
     with open(join(DATA, sid, 'secret'), 'wb') as fp:
         fp.write(box.encrypt(secret.encode('UTF-8')))
 
-    return sid, str(b64encode(key), 'ASCII').replace('/', '_')
+    # Turn key into base64 and remove padding, because it has the
+    # potential of confusing users. ("Is this part of the URL?")
+    key = str(b64encode(key_bytes), 'ASCII')
+    key = key.replace('/', '_')
+    key = key.rstrip('=')
+
+    return sid, key
 
 
 def validate_key(key):
     # It's random bytes, there's not a lot to validate, except for the
-    # length (32 bytes encoded using base64).
-    assert len(key) == 44
+    # length (32 bytes encoded using base64 - minus the rightmost '=').
+    assert len(key) == 44 - 1
 
 
 def validate_sid(sid):
