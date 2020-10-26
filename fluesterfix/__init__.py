@@ -26,6 +26,63 @@ ALREADY_REVEALED = 0
 WRONG_KEY = 1
 OK = 2
 
+TRANS = {
+    'en': {
+        'already revealed': 'This secret has already been revealed.',
+        'clip': 'Copy to clipboard',
+        'create link': 'Create link',
+        'error': 'Error',
+        'only once': 'You can only do this once.',
+        'reveal!': 'Reveal the secret',
+        'reveal?': 'Reveal this secret?',
+        'secret': 'Secret',
+        'share': 'Share a secret',
+        'share new': 'Share a new secret',
+        'share this': 'Share this link',
+        'share this desc': 'Send this link to someone else. <em>It will '
+                           'be valid for 7 days.</em>',
+        'welcome desc': 'Enter your text into the box below. Once you '
+                        'hit the button, you will get a link that you '
+                        'can send to someone else. That link can only '
+                        'be used once.',
+        'wrong key': 'Wrong key. Secret has been destroyed.',
+        'your secret': 'Here’s your secret. It is no longer accessible '
+                       'through the link, so copy it <em>now</em>.',
+    },
+    'de': {
+        'already revealed': 'Die vertraulichen Daten wurden bereits '
+                            'abgerufen.',
+        'clip': 'In die Zwischenablage kopieren',
+        'create link': 'Link erzeugen',
+        'error': 'Fehler',
+        'only once': 'Sie können diesen Vorgang nur <em>einmalig</em> '
+                     'durchführen.',
+        'reveal!': 'Vertrauliche Daten anzeigen',
+        'reveal?': 'Vertrauliche Daten anzeigen?',
+        'secret': 'Vertrauliche Daten',
+        'share': 'Vertrauliche Daten weitergeben',
+        'share new': 'Neue vertrauliche Daten',
+        'share this': 'Geben Sie diesen Link weiter',
+        'share this desc': 'Geben Sie den folgenden Link weiter. <em>Er '
+                           'ist nur für 7 Tage gültig.</em>',
+        'welcome desc': 'Geben Sie Ihre vertraulichen Daten in die '
+                        'Textbox unten ein. Sobald Sie den Knopf '
+                        'betätigen, erhalten Sie einen Link, den Sie '
+                        'weitergeben können. Dieser Link kann nur ein '
+                        'einziges Mal abgerufen werden.',
+        'wrong key': 'Falscher Schlüssel. Daten wurden gelöscht.',
+        'your secret': 'Untenstehend finden Sie die angefragten '
+                       'vertraulichen Daten. Von nun an ist es nicht '
+                       'mehr möglich, diesen Link zu verwenden. Sie '
+                       'sollten die Daten also <em>jetzt</em> sichern.',
+    },
+}
+
+
+def _(msg):
+    selected = request.accept_languages.best_match(TRANS.keys())
+    return TRANS[selected].get(msg, msg)
+
 
 def generate_sid():
     pool = ascii_letters + digits
@@ -36,11 +93,12 @@ def generate_sid():
 
 
 def html(body):
+    selected = request.accept_languages.best_match(TRANS.keys())
     return f'''<!DOCTYPE html>
-<html lang="en">
+<html lang="{selected}">
     <head>
         <meta charset="UTF-8">
-        <title>Share a secret</title>
+        <title>{_('share')}</title>
         <link rel="stylesheet" href="{ url_for('static', filename='style.css') }" type="text/css">
         <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
@@ -121,14 +179,12 @@ def validate_sid(sid):
 
 @app.route('/')
 def index():
-    return html('''
-        <h1>Share a new secret</h1>
-        <p>Enter your text into the box below. Once you hit the button,
-           you will get a link that you can send to someone else. That
-           link can only be used once.</p>
+    return html(f'''
+        <h1>{_('share new')}</h1>
+        <p>{_('welcome desc')}</p>
         <form action="/new" method="post">
             <textarea name="data"></textarea>
-            <input type="submit" value="&#x1f517; Create link">
+            <input type="submit" value="&#x1f517; {_('create link')}">
         </form>
     ''')
 
@@ -138,7 +194,7 @@ def new():
     try:
         secret = request.form.to_dict()['data']
     except:
-        return 'Garbage'
+        return 'Garbage', 400
 
     if len(secret.strip()) <= 0:
         return redirect(url_for('index'))
@@ -148,10 +204,10 @@ def new():
     host = request.headers.get('x-forwarded-host', request.headers['host'])
     sid_url = f'{scheme}://{host}/get/{sid}/{key}'
     return html(f'''
-        <h1>Share this link</h1>
-        <p>Send this link to someone else. <em>It will be valid for 7 days.</em></p>
+        <h1>{_('share this')}</h1>
+        <p>{_('share this desc')}</p>
         <p><input id="copytarget" type="text" value="{sid_url}"></p>
-        <p><span class="button" onclick="copy()">&#x1f4cb; Copy to clipboard</span></p>
+        <p><span class="button" onclick="copy()">&#x1f4cb; {_('clip')}</span></p>
     '''), 201
 
 
@@ -162,11 +218,11 @@ def get(sid, key):
     # FIXME Without that hidden field, lynx insists on doing GET. Is
     # that a bug in lynx or is it invalid to POST empty forms?
     return html(f'''
-        <h1>Reveal this secret?</h1>
-        <p>You can only do this once.</p>
+        <h1>{_('reveal?')}</h1>
+        <p>{_('only once')}</p>
         <form action="/reveal/{sid}/{key}" method="post">
             <input name="compat" type="hidden" value="lynx needs this">
-            <input type="submit" value="&#x1f50d; Reveal the secret">
+            <input type="submit" value="&#x1f50d; {_('reveal!')}">
         </form>
     ''')
 
@@ -178,8 +234,8 @@ def reveal(sid, key):
     secret, status = retrieve(sid, key)
     if status == ALREADY_REVEALED:
         return html(f'''
-            <h1>Error</h1>
-            <p>This secret has already been revealed.</p>
+            <h1>{_('error')}</h1>
+            <p>{_('already revealed')}</p>
         '''), 404
     elif status == WRONG_KEY:
         # Provide a dedicated error message if a wrong key was used.
@@ -189,19 +245,18 @@ def reveal(sid, key):
         # destroyed, there is no risk of being brute forced. (If the
         # secret lived on, an attacker might try again and again.)
         return html(f'''
-            <h1>Error</h1>
-            <p>Wrong key. Secret has been destroyed.</p>
+            <h1>{_('error')}</h1>
+            <p>{_('wrong key')}</p>
         '''), 404
     else:
         # Show all lines, if possible. Never show more than 100, though.
         # CSS also sets a min-height for this.
         lines = min(len(secret.split('\n')), 100)
         return html(f'''
-            <h1>Secret</h1>
-            <p>Here’s your secret. It is no longer accessible through
-               the link, so copy it <em>now</em>.</p>
+            <h1>{_('secret')}</h1>
+            <p>{_('your secret')}</p>
             <textarea rows="{lines}" id="copytarget">{escape(secret)}</textarea>
-            <p><span class="button" onclick="copy()">&#x1f4cb; Copy to clipboard</span></p>
+            <p><span class="button" onclick="copy()">&#x1f4cb; {_('clip')}</span></p>
         '''), 410
 
 
