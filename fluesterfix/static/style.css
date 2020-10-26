@@ -1,16 +1,18 @@
 :root {
     --text-color: #000000;
     --bg-color1: #FFFFFF;
-    --bg-color2: #EEEEEE;
+    --bg-color-button: #c3cd2d;
     --line-color: #CCCCCC;
+    --bg-image: url(bg-diagonal-shapes.svg);
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
         --text-color: #FFFFFF;
         --bg-color1: #222222;
-        --bg-color2: #333333;
+        --bg-color-button: #333333;
         --line-color: #444444;
+        --bg-image: none;
     }
 }
 
@@ -19,6 +21,10 @@
     font-size: 1em;
     color: var(--text-color);
     background-color: var(--bg-color1);
+}
+
+html {
+    background-image: var(--bg-image);
 }
 
 a:link, a:visited {
@@ -50,7 +56,7 @@ input, textarea, .button {
 }
 
 input[type=submit], .button {
-    background-color: var(--bg-color2);
+    background-color: var(--bg-color-button);
     cursor: pointer;
 }
 
