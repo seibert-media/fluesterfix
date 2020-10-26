@@ -20,7 +20,6 @@
     font-family: "Roboto","Helvetica Neue",sans-serif;
     font-size: 1em;
     color: var(--text-color);
-    background-color: var(--bg-color1);
 }
 
 html {
@@ -53,6 +52,7 @@ input, textarea, .button {
     margin: 2px 0;
     display: inline-block;
     border-radius: 2px;
+    background-color: var(--bg-color1);
 }
 
 input[type=submit], .button {
