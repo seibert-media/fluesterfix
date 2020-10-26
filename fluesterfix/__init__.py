@@ -80,8 +80,14 @@ TRANS = {
 
 
 def _(msg):
+    return TRANS[get_lang()].get(msg, msg)
+
+
+def get_lang():
     selected = request.accept_languages.best_match(TRANS.keys())
-    return TRANS[selected].get(msg, msg)
+    if selected:
+        return selected
+    return 'en'
 
 
 def generate_sid():
@@ -93,9 +99,8 @@ def generate_sid():
 
 
 def html(body):
-    selected = request.accept_languages.best_match(TRANS.keys())
     return f'''<!DOCTYPE html>
-<html lang="{selected}">
+<html lang="{get_lang()}">
     <head>
         <meta charset="UTF-8">
         <title>{_('share')}</title>
