@@ -103,11 +103,16 @@ def html(body):
 <html lang="{get_lang()}">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>{_('share')}</title>
         <link rel="stylesheet" href="{ url_for('static', filename='style.css') }" type="text/css">
         <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
     <body>
+        <picture>
+            <source srcset="{ url_for('static', filename='logo-darkmode.png') }" media="(prefers-color-scheme: dark)">
+            <img src="{ url_for('static', filename='logo.png') }" id="logo" alt="//SEIBERT/MEDIA">
+        </picture>
         {body}
     </body>
 </html>'''

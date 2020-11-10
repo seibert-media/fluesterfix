@@ -1,8 +1,9 @@
 :root {
-    --text-color: #000000;
+    --text-color: #333333;
     --bg-color-input: #FFFFFF;
     --bg-color-button: #c3cd2d;
-    --bg-root: #FFFFFF url(bg-diagonal-shapes.svg) no-repeat;
+    --bg-root-color: #FFFFFF;
+    --bg-root-image: url(bg-diagonal-shapes.svg);
     --line-color: #CCCCCC;
 }
 
@@ -11,8 +12,15 @@
         --text-color: #FFFFFF;
         --bg-color-input: #222222;
         --bg-color-button: #333333;
-        --bg-root: #222222;
+        --bg-root-color: #222222;
+        --bg-root-image: none;
         --line-color: #444444;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    :root {
+        --bg-root-image: none;
     }
 }
 
@@ -23,7 +31,10 @@
 }
 
 html {
-    background: var(--bg-root);
+    background-color: var(--bg-root-color);
+    background-image: var(--bg-root-image);
+    background-repeat: no-repeat;
+    background-position: center top;
 }
 
 a:link, a:visited {
@@ -37,26 +48,36 @@ a:hover, a:active, a:focus {
 }
 
 body {
-    margin: 1em 0;
     padding: 0 5em;
+    max-width: 1280px;
+    margin: 0 auto 4em;
+}
+
+#logo {
+    width: 270px;
+    margin: 60px 0 50px;
 }
 
 h1 {
     font-size: 2em;
+    padding-top: 1em;
     font-weight: bold;
+    border-top: 1px solid var(--line-color);
 }
 
 input, textarea, .button {
     border: 1px solid var(--line-color);
-    padding: 5px;
+    padding: 17px 10px;
     margin: 2px 0;
     display: inline-block;
     border-radius: 2px;
 }
 
 input[type=submit], .button {
-    background-color: var(--bg-color-button);
     cursor: pointer;
+    margin-top: 10px;
+    padding: 11px 29px 13px;
+    background-color: var(--bg-color-button);
 }
 
 input[type=text] {
