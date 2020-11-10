@@ -2,7 +2,8 @@
     --text-color: #333333;
     --bg-color-input: #FFFFFF;
     --bg-color-button: #c3cd2d;
-    --bg-root: #FFFFFF url(bg-diagonal-shapes.svg) no-repeat center top;
+    --bg-root-color: #FFFFFF;
+    --bg-root-image: url(bg-diagonal-shapes.svg);
     --line-color: #CCCCCC;
 }
 
@@ -11,8 +12,15 @@
         --text-color: #FFFFFF;
         --bg-color-input: #222222;
         --bg-color-button: #333333;
-        --bg-root: #222222;
+        --bg-root-color: #222222;
+        --bg-root-image: none;
         --line-color: #444444;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    :root {
+        --bg-root-image: none;
     }
 }
 
@@ -23,7 +31,10 @@
 }
 
 html {
-    background: var(--bg-root);
+    background-color: var(--bg-root-color);
+    background-image: var(--bg-root-image);
+    background-repeat: no-repeat;
+    background-position: center top;
 }
 
 a:link, a:visited {
@@ -79,10 +90,4 @@ textarea {
     min-height: 10em;
     line-height: 1.2em;
     background-color: var(--bg-color-input);
-}
-
-@media screen and (max-width: 800px) {
-    html {
-        background: none;
-    }
 }
