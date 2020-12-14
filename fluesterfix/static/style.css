@@ -47,6 +47,10 @@ a:hover, a:active, a:focus {
     border-bottom: 1px solid var(--text-color);
 }
 
+a.headerlink {
+    border: none;
+}
+
 body {
     padding: 0 5em;
     max-width: 1280px;

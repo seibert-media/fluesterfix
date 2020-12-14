@@ -109,10 +109,12 @@ def html(body):
         <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
     <body>
-        <picture>
-            <source srcset="{ url_for('static', filename='logo-darkmode.png') }" media="(prefers-color-scheme: dark)">
-            <img src="{ url_for('static', filename='logo.png') }" id="logo" alt="//SEIBERT/MEDIA">
-        </picture>
+        <a href="/" class="headerlink">
+            <picture>
+                <source srcset="{ url_for('static', filename='logo-darkmode.png') }" media="(prefers-color-scheme: dark)">
+                <img src="{ url_for('static', filename='logo.png') }" id="logo" alt="//SEIBERT/MEDIA">
+            </picture>
+        </a>
         {body}
     </body>
 </html>'''
