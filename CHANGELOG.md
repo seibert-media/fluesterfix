@@ -14,6 +14,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 -   Display of textareas uses the webfont "Ubuntu Mono" to avoid
     ambiguities (`l` vs. `1` and similar). This requires serving a
     ~200kB font file.
+-   Implemented a user request: We now check whether a requested secret
+    exists before offering the form to reveal it.
 
 ## 1.0.0 - 2020-10-30
 

@@ -4,7 +4,7 @@
 from base64 import b64decode, b64encode
 from random import choice
 from os import environ, mkdir, rename
-from os.path import join
+from os.path import isdir, join
 from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
@@ -152,6 +152,10 @@ def retrieve(sid, key):
     return decrypted_bytes.decode('UTF-8'), OK
 
 
+def secret_exists(sid):
+    return isdir(join(DATA, sid))
+
+
 def store(secret):
     while True:
         try:
@@ -227,16 +231,22 @@ def new():
 def get(sid, key):
     validate_key(key)
     validate_sid(sid)
-    # FIXME Without that hidden field, lynx insists on doing GET. Is
-    # that a bug in lynx or is it invalid to POST empty forms?
-    return html(f'''
-        <h1>{_('reveal?')}</h1>
-        <p>{_('only once')}</p>
-        <form action="/reveal/{sid}/{key}" method="post">
-            <input name="compat" type="hidden" value="lynx needs this">
-            <input type="submit" value="&#x1f50d; {_('reveal!')}">
-        </form>
-    ''')
+    if secret_exists(sid):
+        # FIXME Without that hidden field, lynx insists on doing GET. Is
+        # that a bug in lynx or is it invalid to POST empty forms?
+        return html(f'''
+            <h1>{_('reveal?')}</h1>
+            <p>{_('only once')}</p>
+            <form action="/reveal/{sid}/{key}" method="post">
+                <input name="compat" type="hidden" value="lynx needs this">
+                <input type="submit" value="&#x1f50d; {_('reveal!')}">
+            </form>
+        ''')
+    else:
+        return html(f'''
+            <h1>{_('error')}</h1>
+            <p>{_('already revealed')}</p>
+        ''')
 
 
 @app.route('/reveal/<sid>/<key>', methods=['POST'])
