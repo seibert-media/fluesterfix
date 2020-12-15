@@ -24,6 +24,11 @@
     }
 }
 
+@font-face {
+    font-family: "Ubuntu Mono";
+    src: url(UbuntuMono-Regular.ttf);
+}
+
 * {
     font-family: "Roboto","Helvetica Neue",sans-serif;
     font-size: 1em;
@@ -90,6 +95,7 @@ input[type=text] {
 }
 
 textarea {
+    font-family: "Ubuntu Mono",monospace;
     width: 100%;
     min-height: 10em;
     line-height: 1.2em;
