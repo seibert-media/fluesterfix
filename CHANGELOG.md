@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## next
+
+### Changed
+
+-   This project now uses the corporate //SEIBERT/MEDIA design (mostly).
+
+### Added
+
+-   Display of textareas uses the webfont "Ubuntu Mono" to avoid
+    ambiguities (`l` vs. `1` and similar). This requires serving a
+    ~200kB font file.
+
 ## 1.0.0 - 2020-10-30
 
 -   Initial release.
