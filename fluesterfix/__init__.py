@@ -10,7 +10,7 @@ from shutil import rmtree
 from string import ascii_letters, digits
 from subprocess import run
 
-from flask import Flask, escape, redirect, request, url_for
+from flask import Flask, escape, jsonify, redirect, request, url_for
 from nacl.secret import SecretBox
 from nacl.utils import random
 
@@ -208,23 +208,39 @@ def index():
 @app.route('/new', methods=['POST'])
 def new():
     try:
-        secret = request.form.to_dict()['data']
+        if request.is_json:
+            secret = request.json['data']
+        else:
+            secret = request.form.to_dict()['data']
     except:
         return 'Garbage', 400
 
     if len(secret.strip()) <= 0:
-        return redirect(url_for('index'))
+        if request.is_json:
+            return jsonify({
+                'status': 'error',
+                'msg': 'empty secret',
+            }), 400
+        else:
+            return redirect(url_for('index'))
 
     sid, key = store(secret)
     scheme = request.headers.get('x-forwarded-proto', 'http')
     host = request.headers.get('x-forwarded-host', request.headers['host'])
     sid_url = f'{scheme}://{host}/get/{sid}/{key}'
-    return html(f'''
-        <h1>{_('share this')}</h1>
-        <p>{_('share this desc')}</p>
-        <p><input id="copytarget" type="text" value="{sid_url}"></p>
-        <p><span class="button" onclick="copy()">&#x1f4cb; {_('clip')}</span></p>
-    '''), 201
+
+    if request.is_json:
+        return jsonify({
+            'status': 'ok',
+            'secret_link': sid_url
+        }), 201
+    else:
+        return html(f'''
+            <h1>{_('share this')}</h1>
+            <p>{_('share this desc')}</p>
+            <p><input id="copytarget" type="text" value="{sid_url}"></p>
+            <p><span class="button" onclick="copy()">&#x1f4cb; {_('clip')}</span></p>
+        '''), 201
 
 
 @app.route('/get/<sid>/<key>')
