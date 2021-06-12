@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
     ~200kB font file.
 -   Implemented a user request: We now check whether a requested secret
     exists before offering the form to reveal it.
+-   JSON API to create new secrets.
 
 ## 1.0.0 - 2020-10-30
 
