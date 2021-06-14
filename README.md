@@ -42,10 +42,19 @@ old directories in `$FLUESTERFIX_DATA` based on their mtime.
 API
 ---
 
-Post JSON to `/new` to create a new secret programmatically:
+Post a JSON object to `/new` to create a new secret programmatically,
+this object must contain a `string` typed member called `data` holding
+your secret:
 
     $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
-        --data '{ "data": "hello world" }'
+        --data '{ "data": "this is my secret" }'
     {"secret_link":"https://my.ff/get/foo/bar","status":"ok"}
 
 As you can see, you’ll get a JSON response containing the secret link.
+
+On errors, `status` will be the string `error` and there will be an
+additional field called `msg` that indicates what went wrong:
+
+    $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
+        --data '{ "data": "" }'
+    {"msg":"empty secret","status":"error"}
