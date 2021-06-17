@@ -37,3 +37,24 @@ Use the following environment variables:
 The program does not automatically remove secrets which have never been
 retrieved. You might want to install a cron job on your system to remove
 old directories in `$FLUESTERFIX_DATA` based on their mtime.
+
+
+API
+---
+
+Post a JSON object to `/new` to create a new secret programmatically,
+this object must contain a `string` typed member called `data` holding
+your secret:
+
+    $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
+        --data '{ "data": "this is my secret" }'
+    {"secret_link":"https://my.ff/get/foo/bar","status":"ok"}
+
+As you can see, you’ll get a JSON response containing the secret link.
+
+On errors, `status` will be the string `error` and there will be an
+additional field called `msg` that indicates what went wrong:
+
+    $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
+        --data '{ "data": "" }'
+    {"msg":"empty secret","status":"error"}
