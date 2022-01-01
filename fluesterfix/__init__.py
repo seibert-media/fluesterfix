@@ -99,20 +99,25 @@ def generate_sid():
 
 
 def html(body):
+    css_url = environ.get('FLUESTERFIX_CSS', url_for('static', filename='style.css'))
+    logo_url = environ.get('FLUESTERFIX_LOGO', url_for('static', filename='logo.png'))
+    logo_dark_url = environ.get('FLUESTERFIX_LOGO_DARK', url_for('static', filename='logo-darkmode.png'))
+    logo_alt = environ.get('FLUESTERFIX_LABEL', '//SEIBERT/MEDIA')
+
     return f'''<!DOCTYPE html>
 <html lang="{get_lang()}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
         <title>{_('share')}</title>
-        <link rel="stylesheet" href="{ url_for('static', filename='style.css') }" type="text/css">
+        <link rel="stylesheet" href="{ css_url }" type="text/css">
         <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
     <body>
         <a href="/" class="headerlink">
             <picture>
-                <source srcset="{ url_for('static', filename='logo-darkmode.png') }" media="(prefers-color-scheme: dark)">
-                <img src="{ url_for('static', filename='logo.png') }" id="logo" alt="//SEIBERT/MEDIA">
+                <source srcset="{ logo_dark_url }" media="(prefers-color-scheme: dark)">
+                <img src="{ logo_url }" id="logo" alt="{ logo_alt }">
             </picture>
         </a>
         {body}

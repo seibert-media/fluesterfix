@@ -33,6 +33,10 @@ Use the following environment variables:
 -   `$FLUESTERFIX_DATA`: The directory where data will be stored. Must
     exist prior to running the program. Should be created by sysadmin
     with correct permissions. Defaults to `/tmp` for quick tests.
+-   `$FLUESTERFIX_CSS`: URL to custom CSS to use.
+-   `$FLUESTERFIX_LOGO`: URL to custom logo to use.
+-   `$FLUESTERFIX_LOGO_DARK`: URL to custom logo in dark mode to use.
+-   `$FLUESTERFIX_LABEL`: Custom alternative name for logo.
 
 The program does not automatically remove secrets which have never been
 retrieved. You might want to install a cron job on your system to remove
