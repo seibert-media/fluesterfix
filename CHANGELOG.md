@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## next
+
+### Added
+
+-   Introduce new environment variables to make it easier to customize
+    CSS and logos.
+
 ## 2.0.0 - 2021-06-17
 
 ### Changed
