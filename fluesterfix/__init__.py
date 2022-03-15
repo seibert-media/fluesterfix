@@ -152,7 +152,7 @@ def retrieve(sid, key):
     try:
         box = SecretBox(key_bytes)
         decrypted_bytes = box.decrypt(secret_bytes)
-    except:
+    except Exception:
         return None, WRONG_KEY
     return decrypted_bytes.decode('UTF-8'), OK
 
@@ -217,7 +217,7 @@ def new():
             secret = request.json['data']
         else:
             secret = request.form.to_dict()['data']
-    except:
+    except Exception:
         return 'Garbage', 400
 
     if len(secret.strip()) <= 0:
