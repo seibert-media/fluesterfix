@@ -66,3 +66,11 @@ additional field called `msg` that indicates what went wrong:
     $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
         --data '{ "data": "" }'
     {"msg":"empty secret","status":"error"}
+
+To upload “files”, use `data_base64` and provide the `filename` field:
+
+    $ curl -X POST https://my.ff/new -H 'Content-Type: application/json' \
+        --data '{"data_base64": "'"$(base64 <some_file | tr -d '\n')"'", "filename": "whatever.bin"}'
+
+(The only difference between “files” and normal secrets is that “files”
+are being presented as a download to the client’s browser.)
