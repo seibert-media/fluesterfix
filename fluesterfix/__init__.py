@@ -43,11 +43,18 @@ TRANS = {
         'share this': 'Share this link',
         'share this desc': 'Send this link to someone else. <em>It will '
                            'be valid for 7 days.</em>',
-        'welcome text': 'Either enter your text into the box below …',
-        'welcome file': '… or upload a file here:',
-        'welcome final': 'Once you hit the following button, you will '
-                         'get a link that you can send to someone else. '
-                         'That link can only be used once.',
+        'welcome desc': 'Enter your text into the box below. Once you '
+                        'hit the button, you will get a link that you '
+                        'can send to someone else. That link can only '
+                        'be used once.',
+        'welcome maybe file': 'Alternatively, you can '
+                              '<a href="/file">upload a file</a>.',
+        'welcome maybe text': 'Alternatively, you can '
+                              '<a href="/">use plain text</a>.',
+        'welcome file': 'Select the file to upload below. Once you hit '
+                        'the button, you will get a link that you can '
+                        'send to someone else. That link can only be '
+                        'used once.',
         'wrong key': 'Wrong key. Secret has been destroyed.',
         'your secret': 'Here’s your secret. It is no longer accessible '
                        'through the link, so copy it <em>now</em>.',
@@ -70,13 +77,19 @@ TRANS = {
         'share this': 'Geben Sie diesen Link weiter',
         'share this desc': 'Geben Sie den folgenden Link weiter. <em>Er '
                            'ist nur für 7 Tage gültig.</em>',
-        'welcome text': 'Geben Sie entweder Ihre vertraulichen in die '
-                        'Textbox ein …',
-        'welcome file': '… oder laden Sie hier eine Datei hoch:',
-        'welcome final': 'Sobald Sie den folgenden Knopf betätigen, '
-                         'erhalten Sie einen Link, den Sie weitergeben '
-                         'können. Dieser Link kann nur ein einziges Mal '
-                         'abgerufen werden.',
+        'welcome desc': 'Geben Sie Ihre vertraulichen Daten in die '
+                        'Textbox unten ein. Sobald Sie den Knopf '
+                        'betätigen, erhalten Sie einen Link, den Sie '
+                        'weitergeben können. Dieser Link kann nur ein '
+                        'einziges Mal abgerufen werden.',
+        'welcome maybe file': 'Alternativ können Sie '
+                              '<a href="/file">eine Datei hochladen</a>.',
+        'welcome maybe text': 'Alternativ können Sie '
+                              '<a href="/">einfachen Text verwenden</a>.',
+        'welcome file': 'Wählen Sie die hochzuladende Datei aus. Sobald '
+                        'Sie den Knopf betätigen, erhalten Sie einen '
+                        'Link, den Sie weitergeben können. Dieser Link '
+                        'kann nur ein einziges Mal abgerufen werden.',
         'wrong key': 'Falscher Schlüssel. Daten wurden gelöscht.',
         'your secret': 'Untenstehend finden Sie die angefragten '
                        'vertraulichen Daten. Von nun an ist es nicht '
@@ -216,15 +229,26 @@ def validate_sid(sid):
 
 
 @app.route('/')
-def index():
+def form_plain():
     return html(f'''
         <h1>{_('share new')}</h1>
-        <form action="/new" method="post" enctype="multipart/form-data">
-            <p>{_('welcome text')}</p>
+        <p>{_('welcome desc')}</p>
+        <p>{_('welcome maybe file')}</p>
+        <form action="/new" method="post">
             <textarea name="data"></textarea>
-            <p>{_('welcome file')}</p>
+            <input type="submit" value="&#x1f517; {_('create link')}">
+        </form>
+    ''')
+
+
+@app.route('/file')
+def form_file():
+    return html(f'''
+        <h1>{_('share new')}</h1>
+        <p>{_('welcome file')}</p>
+        <p>{_('welcome maybe text')}</p>
+        <form action="/new" method="post"  enctype="multipart/form-data">
             <input type="file" name="file">
-            <p>{_('welcome final')}</p>
             <input type="submit" value="&#x1f517; {_('create link')}">
         </form>
     ''')
@@ -256,7 +280,7 @@ def new():
                 'msg': 'empty secret',
             }), 400
         else:
-            return redirect(url_for('index'))
+            return redirect(url_for('form_plain'))
 
     sid, key = store(secret_bytes, filename)
     scheme = request.headers.get('x-forwarded-proto', 'http')
