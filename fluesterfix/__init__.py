@@ -28,7 +28,11 @@ OK = 2
 
 TRANS = {
     'en': {
-        'already revealed': 'This secret has already been revealed.',
+        'already revealed': 'This secret has already been revealed.<br/>'
+                            'If you are the recipient of this secret, '
+                            'but haven\'t revealed it, you should inform '
+                            'the creator of the secret about a potential '
+                            'security breach.',
         'clip': 'Copy to clipboard',
         'create link': 'Create link',
         'error': 'Error',
@@ -51,7 +55,11 @@ TRANS = {
     },
     'de': {
         'already revealed': 'Die vertraulichen Daten wurden bereits '
-                            'abgerufen.',
+                            'abgerufen.<br/>Falls Sie Empfänger*in der '
+                            'Daten sind, diese aber nicht selbst '
+                            'abgerufen haben, sollten Sie die Versender*in '
+                            'über die potentielle Kompromittierung '
+                            'informieren.',
         'clip': 'In die Zwischenablage kopieren',
         'create link': 'Link erzeugen',
         'error': 'Fehler',
