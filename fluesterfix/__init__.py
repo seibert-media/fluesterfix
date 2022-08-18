@@ -353,6 +353,11 @@ def reveal(sid, key):
             <p>{_('wrong key')}</p>
         '''), 404
     elif filename is not None:
+        # We usually return "HTTP 410" to indicate to browsers that they
+        # don't need to cache this response. This doesn't work for
+        # "downloads", it confuses some browsers and they don't download
+        # anything -- and it doesn't make a lot of sense anyway to use
+        # 410 here.
         response = make_response(secret_bytes, 200)
         response.headers.set('Content-Disposition', 'attachment', filename=filename)
         response.headers.set('Content-Type', 'application/octet-stream')
