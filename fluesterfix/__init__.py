@@ -164,6 +164,7 @@ def retrieve(sid, key):
     try:
         with open(join(DATA, locked_sid, 'filename'), 'r') as fp:
             filename = fp.read()
+        run(['/usr/bin/shred', join(DATA, locked_sid, 'filename')])
     except FileNotFoundError:
         filename = None
 
