@@ -161,6 +161,8 @@ def retrieve(sid, key):
     # destroy it.
     with open(join(DATA, locked_sid, 'secret'), 'rb') as fp:
         secret_bytes = fp.read()
+    run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
+
     try:
         with open(join(DATA, locked_sid, 'filename'), 'r') as fp:
             filename = fp.read()
@@ -168,7 +170,6 @@ def retrieve(sid, key):
     except FileNotFoundError:
         filename = None
 
-    run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
     rmtree(join(DATA, locked_sid))
 
     # Restore padding. (No point in using something like a while loop
