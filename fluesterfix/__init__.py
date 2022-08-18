@@ -28,11 +28,12 @@ OK = 2
 
 TRANS = {
     'en': {
-        'already revealed': 'This secret has already been revealed.<br/>'
-                            'If you are the recipient of this secret, '
-                            'but haven\'t revealed it, you should inform '
-                            'the creator of the secret about a potential '
-                            'security breach.',
+        'already revealed': '<p>This secret has already been '
+                            'revealed.</p><p>If you are the recipient '
+                            'of this secret, but haven\'t revealed it, '
+                            'you should inform the creator of the '
+                            'secret about a potential security '
+                            'breach.</p>',
         'clip': 'Copy to clipboard',
         'create link': 'Create link',
         'error': 'Error',
@@ -54,12 +55,12 @@ TRANS = {
                        'through the link, so copy it <em>now</em>.',
     },
     'de': {
-        'already revealed': 'Die vertraulichen Daten wurden bereits '
-                            'abgerufen.<br/>Falls Sie Empfänger*in der '
-                            'Daten sind, diese aber nicht selbst '
-                            'abgerufen haben, sollten Sie die Versender*in '
-                            'über die potentielle Kompromittierung '
-                            'informieren.',
+        'already revealed': '<p>Die vertraulichen Daten wurden bereits '
+                            'abgerufen.</p><p>Falls Sie Empfänger*in '
+                            'der Daten sind, diese aber nicht selbst '
+                            'abgerufen haben, sollten Sie die '
+                            'Versender*in über die potentielle '
+                            'Kompromittierung informieren.</p>',
         'clip': 'In die Zwischenablage kopieren',
         'create link': 'Link erzeugen',
         'error': 'Fehler',
@@ -274,7 +275,7 @@ def get(sid, key):
     else:
         return html(f'''
             <h1>{_('error')}</h1>
-            <p>{_('already revealed')}</p>
+            {_('already revealed')}
         ''')
 
 
@@ -286,7 +287,7 @@ def reveal(sid, key):
     if status == ALREADY_REVEALED:
         return html(f'''
             <h1>{_('error')}</h1>
-            <p>{_('already revealed')}</p>
+            {_('already revealed')}
         '''), 404
     elif status == WRONG_KEY:
         # Provide a dedicated error message if a wrong key was used.
