@@ -33,6 +33,7 @@ TRANS = {
         'create link': 'Create link',
         'download?': 'Download this secret?',
         'download!': 'Download the secret',
+        'download done': '&#x2705; File retrieved',
         'error': 'Error',
         'only once': 'You can only do this once.',
         'reveal!': 'Reveal the secret',
@@ -66,6 +67,7 @@ TRANS = {
         'create link': 'Link erzeugen',
         'download?': 'Vertrauliche Daten herunterladen?',
         'download!': 'Vertrauliche Daten herunterladen',
+        'download done': '&#x2705; Bereits heruntergeladen',
         'error': 'Fehler',
         'only once': 'Sie können diesen Vorgang nur <em>einmalig</em> '
                      'durchführen.',
@@ -312,18 +314,31 @@ def get(sid, key):
         if as_file:
             h1 = _('download?')
             btn = _('download!')
+            btn_js = (
+                'id="button" '
+                'onclick="'
+                    'document.getElementById(\'button\').disabled = true;'
+                    'document.getElementById(\'button\').value = \'' +
+                        _('download done') +
+                    '\';'
+                    'document.getElementById(\'form\').submit();'
+                '"'
+            )
+            icon = '&#x1f4be;'
         else:
             h1 = _('reveal?')
             btn = _('reveal!')
+            btn_js = ''
+            icon = '&#x1f50d;'
 
         # FIXME Without that hidden field, lynx insists on doing GET. Is
         # that a bug in lynx or is it invalid to POST empty forms?
         return html(f'''
             <h1>{h1}</h1>
             <p>{_('only once')}</p>
-            <form action="/reveal/{sid}/{key}" method="post">
+            <form id="form" action="/reveal/{sid}/{key}" method="post">
                 <input name="compat" type="hidden" value="lynx needs this">
-                <input type="submit" value="&#x1f50d; {btn}">
+                <input type="submit" value="{icon} {btn}" {btn_js}>
             </form>
         ''')
     else:
