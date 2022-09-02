@@ -4,13 +4,13 @@
 from base64 import b64decode, b64encode
 from random import choice
 from os import environ, mkdir, rename
-from os.path import isdir, join
+from os.path import isdir, isfile, join
 from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
 from subprocess import run
 
-from flask import Flask, escape, jsonify, redirect, request, url_for
+from flask import Flask, escape, jsonify, make_response, redirect, request, url_for
 from nacl.secret import SecretBox
 from nacl.utils import random
 
@@ -36,6 +36,9 @@ TRANS = {
                             'breach.</p>',
         'clip': 'Copy to clipboard',
         'create link': 'Create link',
+        'download?': 'Download this secret?',
+        'download!': 'Download the secret',
+        'download done': '&#x2705; File retrieved',
         'error': 'Error',
         'only once': 'You can only do this once.',
         'reveal!': 'Reveal the secret',
@@ -50,6 +53,14 @@ TRANS = {
                         'hit the button, you will get a link that you '
                         'can send to someone else. That link can only '
                         'be used once.',
+        'welcome maybe file': 'Alternatively, you can '
+                              '<a href="/file">upload a file</a>.',
+        'welcome maybe text': 'Alternatively, you can '
+                              '<a href="/">use plain text</a>.',
+        'welcome file': 'Select the file to upload below. Once you hit '
+                        'the button, you will get a link that you can '
+                        'send to someone else. That link can only be '
+                        'used once.',
         'wrong key': 'Wrong key. Secret has been destroyed.',
         'your secret': 'Here’s your secret. It is no longer accessible '
                        'through the link, so copy it <em>now</em>.',
@@ -63,6 +74,9 @@ TRANS = {
                             'Kompromittierung informieren.</p>',
         'clip': 'In die Zwischenablage kopieren',
         'create link': 'Link erzeugen',
+        'download?': 'Vertrauliche Daten herunterladen?',
+        'download!': 'Vertrauliche Daten herunterladen',
+        'download done': '&#x2705; Bereits heruntergeladen',
         'error': 'Fehler',
         'only once': 'Sie können diesen Vorgang nur <em>einmalig</em> '
                      'durchführen.',
@@ -79,6 +93,14 @@ TRANS = {
                         'betätigen, erhalten Sie einen Link, den Sie '
                         'weitergeben können. Dieser Link kann nur ein '
                         'einziges Mal abgerufen werden.',
+        'welcome maybe file': 'Alternativ können Sie '
+                              '<a href="/file">eine Datei hochladen</a>.',
+        'welcome maybe text': 'Alternativ können Sie '
+                              '<a href="/">einfachen Text verwenden</a>.',
+        'welcome file': 'Wählen Sie die hochzuladende Datei aus. Sobald '
+                        'Sie den Knopf betätigen, erhalten Sie einen '
+                        'Link, den Sie weitergeben können. Dieser Link '
+                        'kann nur ein einziges Mal abgerufen werden.',
         'wrong key': 'Falscher Schlüssel. Daten wurden gelöscht.',
         'your secret': 'Untenstehend finden Sie die angefragten '
                        'vertraulichen Daten. Von nun an ist es nicht '
@@ -144,13 +166,21 @@ def retrieve(sid, key):
     try:
         rename(join(DATA, sid), join(DATA, locked_sid))
     except OSError:
-        return None, ALREADY_REVEALED
+        return None, None, ALREADY_REVEALED
 
     # Now that we have "locked" this sid, we can safely read it and then
     # destroy it.
     with open(join(DATA, locked_sid, 'secret'), 'rb') as fp:
         secret_bytes = fp.read()
     run(['/usr/bin/shred', join(DATA, locked_sid, 'secret')])
+
+    try:
+        with open(join(DATA, locked_sid, 'filename'), 'r') as fp:
+            filename = fp.read()
+        run(['/usr/bin/shred', join(DATA, locked_sid, 'filename')])
+    except FileNotFoundError:
+        filename = None
+
     rmtree(join(DATA, locked_sid))
 
     # Restore padding. (No point in using something like a while loop
@@ -162,15 +192,15 @@ def retrieve(sid, key):
         box = SecretBox(key_bytes)
         decrypted_bytes = box.decrypt(secret_bytes)
     except Exception:
-        return None, WRONG_KEY
-    return decrypted_bytes.decode('UTF-8'), OK
+        return None, None, WRONG_KEY
+    return decrypted_bytes, filename, OK
 
 
 def secret_exists(sid):
-    return isdir(join(DATA, sid))
+    return isdir(join(DATA, sid)), isfile(join(DATA, sid, 'filename'))
 
 
-def store(secret):
+def store(secret_bytes, filename):
     while True:
         try:
             # Again, mkdir is an atomic operation on POSIX file systems.
@@ -186,7 +216,11 @@ def store(secret):
     box = SecretBox(key_bytes)
 
     with open(join(DATA, sid, 'secret'), 'wb') as fp:
-        fp.write(box.encrypt(secret.encode('UTF-8')))
+        fp.write(box.encrypt(secret_bytes))
+
+    if filename is not None:
+        with open(join(DATA, sid, 'filename'), 'w') as fp:
+            fp.write(filename)
 
     # Turn key into base64 and remove padding, because it has the
     # potential of confusing users. ("Is this part of the URL?")
@@ -208,12 +242,26 @@ def validate_sid(sid):
 
 
 @app.route('/')
-def index():
+def form_plain():
     return html(f'''
         <h1>{_('share new')}</h1>
         <p>{_('welcome desc')}</p>
+        <p>{_('welcome maybe file')}</p>
         <form action="/new" method="post">
             <textarea name="data"></textarea>
+            <input type="submit" value="&#x1f517; {_('create link')}">
+        </form>
+    ''')
+
+
+@app.route('/file')
+def form_file():
+    return html(f'''
+        <h1>{_('share new')}</h1>
+        <p>{_('welcome file')}</p>
+        <p>{_('welcome maybe text')}</p>
+        <form action="/new" method="post"  enctype="multipart/form-data">
+            <input type="file" name="file">
             <input type="submit" value="&#x1f517; {_('create link')}">
         </form>
     ''')
@@ -223,22 +271,31 @@ def index():
 def new():
     try:
         if request.is_json:
-            secret = request.json['data']
+            if 'data_base64' in request.json and 'filename' in request.json:
+                secret_bytes = b64decode(request.json['data_base64'])
+                filename = request.json['filename']
+            else:
+                secret_bytes = request.json['data'].encode('UTF-8')
+                filename = None
+        elif request.form.get('data'):
+            secret_bytes = request.form['data'].encode('UTF-8')
+            filename = None
         else:
-            secret = request.form.to_dict()['data']
+            secret_bytes = request.files['file'].read()
+            filename = request.files['file'].filename
     except Exception:
         return 'Garbage', 400
 
-    if len(secret.strip()) <= 0:
+    if filename is None and len(secret_bytes.strip()) <= 0:
         if request.is_json:
             return jsonify({
                 'status': 'error',
                 'msg': 'empty secret',
             }), 400
         else:
-            return redirect(url_for('index'))
+            return redirect(url_for('form_plain'))
 
-    sid, key = store(secret)
+    sid, key = store(secret_bytes, filename)
     scheme = request.headers.get('x-forwarded-proto', 'http')
     host = request.headers.get('x-forwarded-host', request.headers['host'])
     sid_url = f'{scheme}://{host}/get/{sid}/{key}'
@@ -261,15 +318,36 @@ def new():
 def get(sid, key):
     validate_key(key)
     validate_sid(sid)
-    if secret_exists(sid):
+    exists, as_file = secret_exists(sid)
+    if exists:
+        if as_file:
+            h1 = _('download?')
+            btn = _('download!')
+            btn_js = (
+                'id="button" '
+                'onclick="'
+                    'document.getElementById(\'button\').disabled = true;'
+                    'document.getElementById(\'button\').value = \'' +
+                        _('download done') +
+                    '\';'
+                    'document.getElementById(\'form\').submit();'
+                '"'
+            )
+            icon = '&#x1f4be;'
+        else:
+            h1 = _('reveal?')
+            btn = _('reveal!')
+            btn_js = ''
+            icon = '&#x1f50d;'
+
         # FIXME Without that hidden field, lynx insists on doing GET. Is
         # that a bug in lynx or is it invalid to POST empty forms?
         return html(f'''
-            <h1>{_('reveal?')}</h1>
+            <h1>{h1}</h1>
             <p>{_('only once')}</p>
-            <form action="/reveal/{sid}/{key}" method="post">
+            <form id="form" action="/reveal/{sid}/{key}" method="post">
                 <input name="compat" type="hidden" value="lynx needs this">
-                <input type="submit" value="&#x1f50d; {_('reveal!')}">
+                <input type="submit" value="{icon} {btn}" {btn_js}>
             </form>
         ''')
     else:
@@ -283,7 +361,7 @@ def get(sid, key):
 def reveal(sid, key):
     validate_key(key)
     validate_sid(sid)
-    secret, status = retrieve(sid, key)
+    secret_bytes, filename, status = retrieve(sid, key)
     if status == ALREADY_REVEALED:
         return html(f'''
             <h1>{_('error')}</h1>
@@ -300,9 +378,20 @@ def reveal(sid, key):
             <h1>{_('error')}</h1>
             <p>{_('wrong key')}</p>
         '''), 404
+    elif filename is not None:
+        # We usually return "HTTP 410" to indicate to browsers that they
+        # don't need to cache this response. This doesn't work for
+        # "downloads", it confuses some browsers and they don't download
+        # anything -- and it doesn't make a lot of sense anyway to use
+        # 410 here.
+        response = make_response(secret_bytes, 200)
+        response.headers.set('Content-Disposition', 'attachment', filename=filename)
+        response.headers.set('Content-Type', 'application/octet-stream')
+        return response
     else:
         # Show all lines, if possible. Never show more than 100, though.
         # CSS also sets a min-height for this.
+        secret = secret_bytes.decode('UTF-8')
         lines = min(len(secret.split('\n')), 100)
         return html(f'''
             <h1>{_('secret')}</h1>

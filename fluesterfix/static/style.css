@@ -89,7 +89,7 @@ input[type=submit], .button {
     background-color: var(--bg-color-button);
 }
 
-input[type=text] {
+input[type=text], input[type=file] {
     width: 100%;
     background-color: var(--bg-color-input);
 }
