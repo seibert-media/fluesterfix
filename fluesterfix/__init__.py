@@ -61,6 +61,7 @@ TRANS = {
                         'the button, you will get a link that you can '
                         'send to someone else. That link can only be '
                         'used once.',
+        'welcome file max': 'Maximum allowed size',
         'wrong key': 'Wrong key. Secret has been destroyed.',
         'your secret': 'Here’s your secret. It is no longer accessible '
                        'through the link, so copy it <em>now</em>.',
@@ -101,6 +102,7 @@ TRANS = {
                         'Sie den Knopf betätigen, erhalten Sie einen '
                         'Link, den Sie weitergeben können. Dieser Link '
                         'kann nur ein einziges Mal abgerufen werden.',
+        'welcome file max': 'Maximal erlaubte Größe',
         'wrong key': 'Falscher Schlüssel. Daten wurden gelöscht.',
         'your secret': 'Untenstehend finden Sie die angefragten '
                        'vertraulichen Daten. Von nun an ist es nicht '
@@ -256,10 +258,28 @@ def form_plain():
 
 @app.route('/file')
 def form_file():
+    max_size = int(environ.get('FLUESTERFIX_MAX_FILE_SIZE'))
+    if max_size is not None:
+        for div, suff in (
+            (1_000_000_000, 'GB'),
+            (1_000_000, 'MB'),
+            (1_000, 'kB'),
+        ):
+            if max_size >= div:
+                max_size_human = f'{max_size // div} {suff}'
+                break
+        else:
+            max_size_human = f'{max_size} Bytes'
+
+        max_size_msg = f'<p>{_("welcome file max")}: {max_size_human}.</p>'
+    else:
+        max_size_msg = ''
+
     return html(f'''
         <h1>{_('share new')}</h1>
         <p>{_('welcome file')}</p>
         <p>{_('welcome maybe text')}</p>
+        {max_size_msg}
         <form action="/new" method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit" value="&#x1f517; {_('create link')}">

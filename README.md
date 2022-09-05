@@ -41,6 +41,9 @@ Use the following environment variables:
     defaults to `logo-darkmode.png`.
 -   `$FLUESTERFIX_LABEL`: Custom alternative name for logo, defaults to
     `//SEIBERT/MEDIA`.
+-   `$FLUESTERFIX_MAX_FILE_SIZE`: Maximum allowed size (in bytes) for
+    file uploads. The actual filtering must be done in your reverse
+    proxy; this variable only displays that limit. Unset by default.
 
 The program does not automatically remove secrets which have never been
 retrieved. You might want to install a cron job on your system to remove
