@@ -260,7 +260,7 @@ def form_file():
         <h1>{_('share new')}</h1>
         <p>{_('welcome file')}</p>
         <p>{_('welcome maybe text')}</p>
-        <form action="/new" method="post"  enctype="multipart/form-data">
+        <form action="/new" method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit" value="&#x1f517; {_('create link')}">
         </form>
