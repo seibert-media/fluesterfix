@@ -160,6 +160,29 @@ def html(body):
 </html>'''
 
 
+def max_size_msg():
+    max_size_env = environ.get('FLUESTERFIX_MAX_FILE_SIZE')
+    if max_size_env is None:
+        return ''
+
+    max_size = int(max_size_env)
+    if max_size is not None:
+        for div, suff in (
+            (1_000_000_000, 'GB'),
+            (1_000_000, 'MB'),
+            (1_000, 'kB'),
+        ):
+            if max_size >= div:
+                max_size_human = f'{max_size // div} {suff}'
+                break
+        else:
+            max_size_human = f'{max_size} Bytes'
+
+        return f'{_("welcome file max")}: {max_size_human}.'
+    else:
+        return ''
+
+
 def retrieve(sid, key):
     # Try to rename this sid's directory. This is an atomic operation on
     # POSIX file systems, meaning two concurrent requests cannot rename
@@ -260,28 +283,12 @@ def form_plain():
 
 @app.route('/file')
 def form_file():
-    max_size = int(environ.get('FLUESTERFIX_MAX_FILE_SIZE'))
-    if max_size is not None:
-        for div, suff in (
-            (1_000_000_000, 'GB'),
-            (1_000_000, 'MB'),
-            (1_000, 'kB'),
-        ):
-            if max_size >= div:
-                max_size_human = f'{max_size // div} {suff}'
-                break
-        else:
-            max_size_human = f'{max_size} Bytes'
-
-        max_size_msg = f'<p>{_("welcome file max")}: {max_size_human}.</p>'
-    else:
-        max_size_msg = ''
-
+    max_size = f'<p>{max_size_msg()}</p>'
     return html(f'''
         <h1>{_('share new file')}</h1>
         <p>{_('welcome file')}</p>
         <p>{_('welcome maybe text')}</p>
-        {max_size_msg}
+        {max_size}
         <form action="/new" method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit" value="&#x1f517; {_('create link')}">
