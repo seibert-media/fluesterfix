@@ -44,11 +44,12 @@ TRANS = {
         'reveal!': 'Reveal the secret',
         'reveal?': 'Reveal this secret?',
         'secret': 'Secret',
-        'share': 'Share a secret',
-        'share new': 'Share a new secret',
+        'share new secret': 'Share a new secret',
+        'share new file': 'Share a new file',
         'share this': 'Share this link',
         'share this desc': 'Send this link to someone else. <em>It will '
                            'be valid for 7 days.</em>',
+        'title': 'Share a secret',
         'welcome desc': 'Enter your text into the box below. Once you '
                         'hit the button, you will get a link that you '
                         'can send to someone else. That link can only '
@@ -84,11 +85,12 @@ TRANS = {
         'reveal!': 'Vertrauliche Daten anzeigen',
         'reveal?': 'Vertrauliche Daten anzeigen?',
         'secret': 'Vertrauliche Daten',
-        'share': 'Vertrauliche Daten weitergeben',
-        'share new': 'Neue vertrauliche Daten',
+        'share new secret': 'Neue vertrauliche Daten',
+        'share new file': 'Neue vertrauliche Datei hochladen',
         'share this': 'Geben Sie diesen Link weiter',
         'share this desc': 'Geben Sie den folgenden Link weiter. <em>Er '
                            'ist nur für 7 Tage gültig.</em>',
+        'title': 'Vertrauliche Daten weitergeben',
         'welcome desc': 'Geben Sie Ihre vertraulichen Daten in die '
                         'Textbox unten ein. Sobald Sie den Knopf '
                         'betätigen, erhalten Sie einen Link, den Sie '
@@ -142,7 +144,7 @@ def html(body):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width,initial-scale=1.0">
-        <title>{_('share')}</title>
+        <title>{_('title')}</title>
         <link rel="stylesheet" href="{ css_url }" type="text/css">
         <script src="{ url_for('static', filename='clipboard.js') }"></script>
     </head>
@@ -246,7 +248,7 @@ def validate_sid(sid):
 @app.route('/')
 def form_plain():
     return html(f'''
-        <h1>{_('share new')}</h1>
+        <h1>{_('share new secret')}</h1>
         <p>{_('welcome desc')}</p>
         <p>{_('welcome maybe file')}</p>
         <form action="/new" method="post">
@@ -276,7 +278,7 @@ def form_file():
         max_size_msg = ''
 
     return html(f'''
-        <h1>{_('share new')}</h1>
+        <h1>{_('share new file')}</h1>
         <p>{_('welcome file')}</p>
         <p>{_('welcome maybe text')}</p>
         {max_size_msg}
