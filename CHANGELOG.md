@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## next
+
+### Added
+
+-   A more verbose warning about secrets that have already been
+    retrieved.
+-   File uploads as an alternative to the plain text field.
+
 ## 2.1.1 - 2022-03-15
 
 ### Fixed
