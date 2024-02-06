@@ -137,7 +137,7 @@ def html(body):
     css_url = environ.get('FLUESTERFIX_CSS', url_for('static', filename='style.css'))
     logo_url = environ.get('FLUESTERFIX_LOGO', url_for('static', filename='logo.png'))
     logo_dark_url = environ.get('FLUESTERFIX_LOGO_DARK', url_for('static', filename='logo-darkmode.png'))
-    logo_alt = environ.get('FLUESTERFIX_LABEL', '//SEIBERT/MEDIA')
+    logo_alt = environ.get('FLUESTERFIX_LABEL', 'seibert//')
 
     return f'''<!DOCTYPE html>
 <html lang="{get_lang()}">
