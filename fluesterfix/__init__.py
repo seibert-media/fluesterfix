@@ -10,7 +10,8 @@ from shutil import rmtree
 from string import ascii_letters, digits
 from subprocess import run
 
-from flask import Flask, escape, jsonify, make_response, redirect, request, url_for
+from flask import Flask, jsonify, make_response, redirect, request, url_for
+from markupsafe import escape
 from nacl.secret import SecretBox
 from nacl.utils import random
 
