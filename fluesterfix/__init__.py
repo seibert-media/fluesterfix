@@ -9,6 +9,7 @@ from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
 from subprocess import run
+import unicodedata
 
 from flask import Flask, jsonify, make_response, redirect, request, url_for
 from markupsafe import escape
@@ -247,6 +248,7 @@ def store(secret_bytes, filename):
         fp.write(box.encrypt(secret_bytes))
 
     if filename is not None:
+        filename = unicodedata.normalize('NFC', filename)
         with open(join(DATA, sid, 'filename'), 'w') as fp:
             fp.write(filename)
 
