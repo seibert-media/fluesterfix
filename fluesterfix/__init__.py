@@ -9,6 +9,8 @@ from re import compile as re_compile
 from shutil import rmtree
 from string import ascii_letters, digits
 from subprocess import run
+import unicodedata
+from urllib.parse import quote
 
 from flask import Flask, jsonify, make_response, redirect, request, url_for
 from markupsafe import escape
@@ -414,8 +416,24 @@ def reveal(sid, key):
         # "downloads", it confuses some browsers and they don't download
         # anything -- and it doesn't make a lot of sense anyway to use
         # 410 here.
+
+        # HTTP Headers can only be ascii, to encode UTF-8 filenames a special header tag an encoding is needed:
+        # https://stackoverflow.com/a/20933751
+        # Code for Flask specifically was taken from
+        # https://stackoverflow.com/a/43376150
+        try:
+            filename.encode("ascii")
+        except UnicodeEncodeError:
+            simple = unicodedata.normalize("NFKD", filename)
+            simple = simple.encode("ascii", "ignore").decode("ascii")
+            # safe = RFC 5987 attr-char
+            quoted = quote(filename, safe="!#$&+-.^_`|~")
+            names = {"filename": simple, "filename*": f"UTF-8''{quoted}"}
+        else:
+            names = {"filename": filename}
+
         response = make_response(secret_bytes, 200)
-        response.headers.set('Content-Disposition', 'attachment', filename=filename)
+        response.headers.set('Content-Disposition', 'attachment', **names)
         response.headers.set('Content-Type', 'application/octet-stream')
         return response
     else:
