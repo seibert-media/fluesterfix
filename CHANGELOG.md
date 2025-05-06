@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## next
+
+### Changed
+
+-   New default corporate design.
+
+### Fixed
+
+-   Compatibility with Flask 3.0.
+-   Fixed issues with UTF-8 in filenames.
+
 ## 2.2.0 - 2022-09-08
 
 ### Added
