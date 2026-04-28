@@ -41,9 +41,20 @@ Use the following environment variables:
     defaults to `logo-darkmode.png`.
 -   `$FLUESTERFIX_LABEL`: Custom alternative name for logo, defaults to
     `//SEIBERT/MEDIA`.
--   `$FLUESTERFIX_MAX_FILE_SIZE`: Maximum allowed size (in bytes) for
-    file uploads. The actual filtering must be done in your reverse
-    proxy; this variable only displays that limit. Unset by default.
+-   `$FLUESTERFIX_MAX_FILE_SIZES`: Maximum allowed size (in bytes) for
+    file uploads. This is a JSON snippet:
+
+        {"default": 1000, "per_net": {"1.2.3.0/24": 5555}}
+
+    Please be aware that fluesterfix trusts the HTTP header
+    `X-Forwarded-For`, because it assumes that it gets sent by a trusted
+    reverse proxy.
+
+    If there are multiple matches (because the networks overlap), then
+    the most specific match wins.
+
+    It is highly advisable to *also* configure a size limit in your
+    reverse proxy (i.e., the max value of all your configured values).
 
 The program does not automatically remove secrets which have never been
 retrieved. You might want to install a cron job on your system to remove

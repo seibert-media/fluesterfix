@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## next
+
+### Changed
+
+-   `$FLUESTERFIX_MAX_FILE_SIZE` has been replaced with
+    `$FLUESTERFIX_MAX_FILE_SIZES`: This is now a JSON snippet and the
+    limiting is done in fluesterfix (instead of the reverse proxy in
+    front of it).
+
 ## 3.0.0 - 2025-05-06
 
 ### Changed

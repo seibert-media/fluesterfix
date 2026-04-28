@@ -2,6 +2,8 @@
 
 
 from base64 import b64decode, b64encode
+from ipaddress import ip_address, ip_network
+from json import loads
 from random import choice
 from os import environ, mkdir, rename
 from os.path import isdir, isfile, join
@@ -12,13 +14,16 @@ from subprocess import run
 import unicodedata
 from urllib.parse import quote
 
-from flask import Flask, jsonify, make_response, redirect, request, url_for
+from flask import Flask, abort, jsonify, make_response, redirect, request, url_for
 from markupsafe import escape
 from nacl.secret import SecretBox
 from nacl.utils import random
 
 
 app = Flask(__name__)
+
+# Filled later, needs `parse_request_limits()` to be defined.
+REQUEST_LIMITS = {}
 
 DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
 SID_LEN = 4
@@ -164,12 +169,10 @@ def html(body):
 
 
 def max_size_msg():
-    max_size_env = environ.get('FLUESTERFIX_MAX_FILE_SIZE')
-    if max_size_env is None:
+    max_size = request_get_limit()
+    if max_size is None:
         return ''
-
-    max_size = int(max_size_env)
-    if max_size is not None:
+    else:
         for div, suff in (
             (1_000_000_000, 'GB'),
             (1_000_000, 'MB'),
@@ -181,9 +184,35 @@ def max_size_msg():
         else:
             max_size_human = f'{max_size} Bytes'
 
-        return f'{_("welcome file max")}: {max_size_human}.'
-    else:
-        return ''
+        return f'<p>{_("welcome file max")}: {max_size_human}.</p>'
+
+
+def parse_request_limits():
+    # Expects a JSON snippet:
+    #
+    #    {"default": 100, "per_net": {"10.0.0.0/16": 100000}}
+    #
+    # Default is "unlimited" if unset.
+    max_size_env = environ.get('FLUESTERFIX_MAX_FILE_SIZES')
+    if not max_size_env:
+        return {
+            'default': None,
+            'per_net': {},
+        }
+
+    # This is an admin-defined value, so simply abort if it can't be
+    # parsed.
+    max_sizes = loads(max_size_env)
+
+    max_sizes.setdefault('default', None)
+    max_sizes.setdefault('per_net', {})
+
+    max_sizes['per_net'] = {
+        ip_network(net): limit
+        for net, limit in max_sizes['per_net'].items()
+    }
+
+    return max_sizes
 
 
 def retrieve(sid, key):
@@ -224,6 +253,30 @@ def retrieve(sid, key):
     except Exception:
         return None, None, WRONG_KEY
     return decrypted_bytes, filename, OK
+
+
+def request_get_limit():
+    # Determine IP of this request. Trust `X-Forwarded-For` if it is
+    # set, because it is assumed to come from a trusted reverse proxy.
+    remote = request.headers.get('X-Forwarded-For', request.remote_addr)
+    try:
+        remote_ip = ip_address(remote)
+    except ValueError:
+        return REQUEST_LIMITS['default']
+
+    # Find all networks that match.
+    matches = [
+        (net, limit)
+        for net, limit in REQUEST_LIMITS['per_net'].items()
+        if remote_ip in net
+    ]
+    if not matches:
+        return REQUEST_LIMITS['default']
+
+    # The one network with the longest prefixlen is the winner, because
+    # this is the most significant match.
+    best_match = max((net.prefixlen, limit) for net, limit in matches)
+    return best_match[1]
 
 
 def secret_exists(sid):
@@ -286,12 +339,11 @@ def form_plain():
 
 @app.route('/file')
 def form_file():
-    max_size = f'<p>{max_size_msg()}</p>'
     return html(f'''
         <h1>{_('share new file')}</h1>
         <p>{_('welcome file')}</p>
         <p>{_('welcome maybe text')}</p>
-        {max_size}
+        {max_size_msg()}
         <form action="/new" method="post" enctype="multipart/form-data">
             <input type="file" name="file">
             <input type="submit" value="&#x1f517; {_('create link')}">
@@ -301,6 +353,10 @@ def form_file():
 
 @app.route('/new', methods=['POST'])
 def new():
+    max_size = request_get_limit()
+    if max_size is not None and request.content_length > max_size:
+        abort(413)
+
     try:
         if request.is_json:
             if 'data_base64' in request.json and 'filename' in request.json:
@@ -448,6 +504,8 @@ def reveal(sid, key):
             <p><span class="button" onclick="copy()">&#x1f4cb; {_('clip')}</span></p>
         '''), 410
 
+
+REQUEST_LIMITS = parse_request_limits()
 
 if __name__ == '__main__':
     app.run(host='::')
