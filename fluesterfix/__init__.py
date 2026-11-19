@@ -21,8 +21,9 @@ from nacl.utils import random
 app = Flask(__name__)
 
 DATA = environ.get('FLUESTERFIX_DATA', '/tmp')
-SID_LEN = 4
-SID_VALIDATOR = re_compile(f'^[A-Za-z0-9]{{{SID_LEN}}}$')
+SID_LEN = 16
+SID_LEN_LEGACY = 4  # TODO Remove in 4.0
+SID_VALIDATOR = re_compile(f'^([A-Za-z0-9]{{{SID_LEN}}})|([A-Za-z0-9]{{{SID_LEN_LEGACY}}})$')
 
 # I wish there were enums in Python.
 ALREADY_REVEALED = 0
